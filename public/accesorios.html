@@ -71,8 +71,9 @@ h1{text-align:center;margin-bottom:5px}
 let carrito = JSON.parse(localStorage.getItem("carrito")) || [];
 let total = parseInt(localStorage.getItem("total")) || 0;
 
+// 🔥 FETCH CORREGIDO (sin localhost)
 async function obtenerProductos() {
-  const res = await fetch("http://localhost:3000/productos");
+  const res = await fetch("/productos");
   const data = await res.json();
   return data.filter(p => p.tipo === "accesorio");
 }
@@ -87,53 +88,102 @@ async function renderProductos(){
   const grid = document.getElementById("grid");
   const productos = await obtenerProductos();
   grid.innerHTML="";
+
   productos.forEach(p=>{
     const card = document.createElement("div");
     card.className="card";
     card.dataset.subtipo = p.subtipo;
+
     card.innerHTML=`
-      <span class="badge ${p.stock>0?"available":"sold"}">${p.stock>0?"Disponible":"Agotado"}</span>
+      <span class="badge ${p.stock>0?"available":"sold"}">
+        ${p.stock>0?"Disponible":"Agotado"}
+      </span>
+
       <div class="carousel">
         ${p.imagenes.map((img,i)=>`<img src="${img}" class="${i===0?'active':''}">`).join("")}
       </div>
+
       <div class="card-body">
         <h3>${p.nombre}</h3>
         <div class="price">$${p.precio.toLocaleString()}</div>
-        <button class="btn" ${p.stock>0?`onclick="agregarAlCarrito(${p.id})"`:"disabled"}>
+        <button class="btn"
+          ${p.stock>0?`onclick="agregarAlCarrito('${p._id}')"`:"disabled"}>
           ${p.stock>0?"Agregar al carrito":"No disponible"}
         </button>
       </div>
     `;
     grid.appendChild(card);
   });
+
   initCarousel();
 }
 
 function initCarousel(){
   document.querySelectorAll(".carousel").forEach(c=>{
     let imgs = c.querySelectorAll("img"), index=0;
-    const prev = document.createElement("button"); prev.className="prev"; prev.innerText="‹";
-    const next = document.createElement("button"); next.className="next"; next.innerText="›";
-    c.appendChild(prev); c.appendChild(next);
-    prev.onclick = ()=>{ imgs[index].classList.remove("active"); index=(index-1+imgs.length)%imgs.length; imgs[index].classList.add("active"); };
-    next.onclick = ()=>{ imgs[index].classList.remove("active"); index=(index+1)%imgs.length; imgs[index].classList.add("active"); };
+
+    const prev = document.createElement("button");
+    prev.className="prev";
+    prev.innerText="‹";
+
+    const next = document.createElement("button");
+    next.className="next";
+    next.innerText="›";
+
+    c.appendChild(prev);
+    c.appendChild(next);
+
+    prev.onclick = ()=>{
+      imgs[index].classList.remove("active");
+      index=(index-1+imgs.length)%imgs.length;
+      imgs[index].classList.add("active");
+    };
+
+    next.onclick = ()=>{
+      imgs[index].classList.remove("active");
+      index=(index+imgs.length+1)%imgs.length;
+      imgs[index].classList.add("active");
+    };
   });
 }
 
 // -------------------- CARRITO --------------------
-function actualizarContador(){ document.getElementById("count").innerText=carrito.length; }
+
+function actualizarContador(){
+  document.getElementById("count").innerText=carrito.length;
+}
 
 async function agregarAlCarrito(id){
   const productos = await obtenerProductos();
-  const p = productos.find(x=>x.id===id);
-  if(p.stock<=0) return alert(`No hay más stock de ${p.nombre}`);
+  const p = productos.find(x=>x._id===id);
+
+  if(!p) return alert("Producto no encontrado");
+
+  if(p.stock<=0)
+    return alert(`No hay más stock de ${p.nombre}`);
+
   const enCarrito = carrito.find(x=>x.id===id);
   const cantidadEnCarrito = enCarrito?enCarrito.cantidad:0;
-  if(cantidadEnCarrito+1>p.stock) return alert(`No hay suficiente stock de ${p.nombre}`);
-  if(enCarrito){ enCarrito.cantidad+=1; } else { carrito.push({id:p.id,nombre:p.nombre,precio:p.precio,cantidad:1}); }
+
+  if(cantidadEnCarrito+1>p.stock)
+    return alert(`No hay suficiente stock de ${p.nombre}`);
+
+  if(enCarrito){
+    enCarrito.cantidad+=1;
+  } else {
+    carrito.push({
+      id:p._id,
+      nombre:p.nombre,
+      precio:p.precio,
+      cantidad:1
+    });
+  }
+
   total += p.precio;
+
   localStorage.setItem("carrito",JSON.stringify(carrito));
   localStorage.setItem("total",total);
+
   actualizarContador();
   renderCart();
 }
@@ -141,19 +191,28 @@ async function agregarAlCarrito(id){
 function renderCart(){
   const items = document.getElementById("items");
   items.innerHTML="";
+
   carrito.forEach((item,index)=>{
-    items.innerHTML+=`<div class='cart-item'>${item.nombre} x${item.cantidad} 
-      <span style="color:red;cursor:pointer;font-weight:700;margin-left:8px" onclick="eliminar(${index})">✖</span></div>`;
+    items.innerHTML+=`
+      <div class='cart-item'>
+        ${item.nombre} x${item.cantidad}
+        <span style="color:red;cursor:pointer;font-weight:700;margin-left:8px"
+        onclick="eliminar(${index})">✖</span>
+      </div>`;
   });
-  document.getElementById("total").innerHTML="<strong>Total: $"+total+"</strong>";
+
+  document.getElementById("total").innerHTML=
+    "<strong>Total: $"+total+"</strong>";
 }
 
 function eliminar(index){
   const item = carrito[index];
   total -= item.precio*item.cantidad;
   carrito.splice(index,1);
+
   localStorage.setItem("carrito",JSON.stringify(carrito));
   localStorage.setItem("total",total);
+
   actualizarContador();
   renderCart();
 }
@@ -165,13 +224,17 @@ function toggleCart(){
 
 function enviarWhatsApp(){
   if(carrito.length===0) return;
+
   let mensaje="Hola! Quiero pedir:%0A";
   carrito.forEach(i=>mensaje+=`- ${i.nombre} x${i.cantidad} %0A`);
   mensaje+=`%0ATotal: $${total}`;
+
   window.open("https://wa.me/5493513171230?text="+mensaje);
+
   carrito=[]; total=0;
   localStorage.setItem("carrito",JSON.stringify(carrito));
   localStorage.setItem("total",total);
+
   actualizarContador();
   renderCart();
   toggleCart();
@@ -182,5 +245,3 @@ renderProductos();
 actualizarContador();
 renderCart();
 </script>
-</body>
-</html>
