@@ -53,7 +53,7 @@ button:hover{opacity:.8}
 </div>
 
 <script>
-const API_URL = "http://localhost:3000/productos";
+const API_URL = "/productos"; // 🔥 CAMBIADO (antes localhost)
 const tbody = document.getElementById("productos-body");
 const btnAgregar = document.getElementById("btn-agregar");
 
@@ -64,15 +64,15 @@ async function cargarProductos() {
   productos.forEach(p => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${p.id}</td>
+      <td>${p.id || p._id}</td>
       <td>${p.nombre}</td>
       <td>${p.precio}</td>
-      <td><input type="number" value="${p.stock}" data-id="${p.id}" class="stock-input"></td>
+      <td><input type="number" value="${p.stock}" data-id="${p.id || p._id}" class="stock-input"></td>
       <td>${p.tipo}</td>
       <td>${p.subtipo}</td>
       <td>
-        <button class="btn-guardar" data-id="${p.id}">Guardar</button>
-        <button class="btn-borrar" data-id="${p.id}">Borrar</button>
+        <button class="btn-guardar" data-id="${p.id || p._id}">Guardar</button>
+        <button class="btn-borrar" data-id="${p.id || p._id}">Borrar</button>
       </td>
     `;
     tbody.appendChild(tr);
@@ -107,9 +107,12 @@ btnAgregar.addEventListener("click", async () => {
   const stock = parseInt(document.getElementById("stock").value);
   const tipo = document.getElementById("tipo").value;
   const subtipo = document.getElementById("subtipo").value;
-  const imagenes = document.getElementById("imagenes").value.split(",").map(s=>s.trim()).filter(s=>s);
+  const imagenes = document.getElementById("imagenes").value
+    .split(",")
+    .map(s => s.trim())
+    .filter(s => s);
 
-  if (!nombre || isNaN(precio) || isNaN(stock) || !tipo || !subtipo || imagenes.length===0)
+  if (!nombre || isNaN(precio) || isNaN(stock) || !tipo || !subtipo || imagenes.length === 0)
     return alert("Completa todos los campos");
 
   await fetch(API_URL, {
@@ -130,5 +133,6 @@ btnAgregar.addEventListener("click", async () => {
 
 cargarProductos();
 </script>
+
 </body>
 </html>
