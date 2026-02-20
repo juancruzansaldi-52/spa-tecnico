@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>spa.tecnico | Accesorios</title>
+<style>
+:root {
+    --purple:#6C63FF; --green:#25D366; --black:#111; --white:#fff;
+    --bg:#F3F5F6; --muted:#6B6B6B; --radius:16px; --shadow:0 10px 25px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial}
+body{margin:0;background:var(--bg);padding:25px 15px}
+.container{max-width:1200px;margin:auto}
+.top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:25px}
+.back{text-decoration:none;background:white;padding:10px 14px;border-radius:var(--radius);box-shadow:var(--shadow);font-weight:600;color:black}
+select{padding:10px;border-radius:var(--radius);border:none;box-shadow:var(--shadow);font-weight:600}
+h1{text-align:center;margin-bottom:5px}
+.subtitle{text-align:center;color:var(--muted);margin-bottom:25px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:25px}
+.card{background:white;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;position:relative;transition:.3s;}
+.card:hover{transform:translateY(-6px)}
+.badge{position:absolute;top:12px;left:12px;padding:6px 10px;border-radius:20px;font-size:12px;font-weight:700;color:white;}
+.available{background:#2ecc71}
+.sold{background:#e74c3c}
+.carousel{position:relative;height:180px;}
+.carousel img{width:100%;height:180px;object-fit:contain;display:none;}
+.carousel img.active{display:block}
+.carousel button{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);color:white;border:none;width:30px;height:30px;border-radius:50%;cursor:pointer;}
+.prev{left:8px}
+.next{right:8px}
+.card-body{padding:15px;text-align:center;}
+.price{font-weight:800;margin:10px 0;}
+.btn{background:var(--black);color:white;padding:10px 14px;border-radius:10px;font-weight:700;border:none;cursor:pointer;width:100%;}
+.btn:disabled{background:#aaa;cursor:not-allowed;}
+.cart{position:fixed;bottom:20px;right:20px;background:var(--purple);color:white;padding:15px;border-radius:20px;box-shadow:var(--shadow);font-weight:700;cursor:pointer;}
+.cart-box{position:fixed;bottom:90px;right:20px;background:white;padding:20px;border-radius:var(--radius);box-shadow:var(--shadow);width:300px;display:none;}
+.cart-box h3{margin-top:0}
+.cart-item{font-size:14px;margin-bottom:8px}
+.checkout{background:var(--green);color:white;padding:10px;border-radius:10px;text-align:center;font-weight:700;cursor:pointer;margin-top:10px;}
+</style>
+</head>
+<body>
+
+<div class="container">
+<div class="top">
+<a href="index.html" class="back">← Volver</a>
+<select onchange="filtrar(this.value)">
+<option value="all">Todos</option>
+<option value="funda">Fundas</option>
+<option value="cargador">Cargadores</option>
+<option value="cable">Cables</option>
+</select>
+</div>
+
+<h1>📦 Accesorios</h1>
+<p class="subtitle">Elegí tus accesorios y enviá tu pedido por WhatsApp</p>
+
+<div class="grid" id="grid"></div>
+</div>
+
+<div class="cart" onclick="toggleCart()">🛒 Carrito (<span id="count">0</span>)</div>
+<div class="cart-box" id="cartBox">
+<h3>Tu pedido</h3>
+<div id="items"></div>
+<div id="total"></div>
+<div class="checkout" onclick="enviarWhatsApp()">Enviar por WhatsApp</div>
+</div>
+
+<script>
+let carrito = JSON.parse(localStorage.getItem("carrito")) || [];
+let total = parseInt(localStorage.getItem("total")) || 0;
+
+async function obtenerProductos() {
+  const res = await fetch("http://localhost:3000/productos");
+  const data = await res.json();
+  return data.filter(p => p.tipo === "accesorio");
+}
+
+function filtrar(tipo){
+  document.querySelectorAll('.card').forEach(card=>{
+    card.style.display=(tipo==='all'||card.dataset.subtipo===tipo)?'block':'none';
+  });
+}
+
+async function renderProductos(){
+  const grid = document.getElementById("grid");
+  const productos = await obtenerProductos();
+  grid.innerHTML="";
+  productos.forEach(p=>{
+    const card = document.createElement("div");
+    card.className="card";
+    card.dataset.subtipo = p.subtipo;
+    card.innerHTML=`
+      <span class="badge ${p.stock>0?"available":"sold"}">${p.stock>0?"Disponible":"Agotado"}</span>
+      <div class="carousel">
+        ${p.imagenes.map((img,i)=>`<img src="${img}" class="${i===0?'active':''}">`).join("")}
+      </div>
+      <div class="card-body">
+        <h3>${p.nombre}</h3>
+        <div class="price">$${p.precio.toLocaleString()}</div>
+        <button class="btn" ${p.stock>0?`onclick="agregarAlCarrito(${p.id})"`:"disabled"}>
+          ${p.stock>0?"Agregar al carrito":"No disponible"}
+        </button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+  initCarousel();
+}
+
+function initCarousel(){
+  document.querySelectorAll(".carousel").forEach(c=>{
+    let imgs = c.querySelectorAll("img"), index=0;
+    const prev = document.createElement("button"); prev.className="prev"; prev.innerText="‹";
+    const next = document.createElement("button"); next.className="next"; next.innerText="›";
+    c.appendChild(prev); c.appendChild(next);
+    prev.onclick = ()=>{ imgs[index].classList.remove("active"); index=(index-1+imgs.length)%imgs.length; imgs[index].classList.add("active"); };
+    next.onclick = ()=>{ imgs[index].classList.remove("active"); index=(index+1)%imgs.length; imgs[index].classList.add("active"); };
+  });
+}
+
+// -------------------- CARRITO --------------------
+function actualizarContador(){ document.getElementById("count").innerText=carrito.length; }
+
+async function agregarAlCarrito(id){
+  const productos = await obtenerProductos();
+  const p = productos.find(x=>x.id===id);
+  if(p.stock<=0) return alert(`No hay más stock de ${p.nombre}`);
+  const enCarrito = carrito.find(x=>x.id===id);
+  const cantidadEnCarrito = enCarrito?enCarrito.cantidad:0;
+  if(cantidadEnCarrito+1>p.stock) return alert(`No hay suficiente stock de ${p.nombre}`);
+  if(enCarrito){ enCarrito.cantidad+=1; } else { carrito.push({id:p.id,nombre:p.nombre,precio:p.precio,cantidad:1}); }
+  total += p.precio;
+  localStorage.setItem("carrito",JSON.stringify(carrito));
+  localStorage.setItem("total",total);
+  actualizarContador();
+  renderCart();
+}
+
+function renderCart(){
+  const items = document.getElementById("items");
+  items.innerHTML="";
+  carrito.forEach((item,index)=>{
+    items.innerHTML+=`<div class='cart-item'>${item.nombre} x${item.cantidad} 
+      <span style="color:red;cursor:pointer;font-weight:700;margin-left:8px" onclick="eliminar(${index})">✖</span></div>`;
+  });
+  document.getElementById("total").innerHTML="<strong>Total: $"+total+"</strong>";
+}
+
+function eliminar(index){
+  const item = carrito[index];
+  total -= item.precio*item.cantidad;
+  carrito.splice(index,1);
+  localStorage.setItem("carrito",JSON.stringify(carrito));
+  localStorage.setItem("total",total);
+  actualizarContador();
+  renderCart();
+}
+
+function toggleCart(){
+  const box=document.getElementById("cartBox");
+  box.style.display = box.style.display==="block"?"none":"block";
+}
+
+function enviarWhatsApp(){
+  if(carrito.length===0) return;
+  let mensaje="Hola! Quiero pedir:%0A";
+  carrito.forEach(i=>mensaje+=`- ${i.nombre} x${i.cantidad} %0A`);
+  mensaje+=`%0ATotal: $${total}`;
+  window.open("https://wa.me/5493513171230?text="+mensaje);
+  carrito=[]; total=0;
+  localStorage.setItem("carrito",JSON.stringify(carrito));
+  localStorage.setItem("total",total);
+  actualizarContador();
+  renderCart();
+  toggleCart();
+}
+
+// Inicializar
+renderProductos();
+actualizarContador();
+renderCart();
+</script>
+</body>
+</html>

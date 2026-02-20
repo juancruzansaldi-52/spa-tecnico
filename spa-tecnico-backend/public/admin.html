@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Admin | spa.tecnico</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial;background:#F3F5F6;padding:20px}
+h1,h2{margin:0 0 10px 0}
+table{width:100%;border-collapse:collapse;margin-bottom:20px}
+th,td{border:1px solid #ccc;padding:8px;text-align:center}
+input,select{padding:6px;margin:2px;border-radius:6px;border:1px solid #aaa}
+button{padding:6px 12px;border:none;border-radius:6px;background:#6C63FF;color:white;font-weight:700;cursor:pointer;margin:2px}
+button:hover{opacity:.8}
+.container{max-width:1200px;margin:auto}
+</style>
+</head>
+<body>
+
+<div class="container">
+<h1>Panel Admin - spa.tecnico</h1>
+
+<h2>Agregar Producto</h2>
+<div>
+  <input id="nombre" placeholder="Nombre">
+  <input id="precio" type="number" placeholder="Precio">
+  <input id="stock" type="number" placeholder="Stock">
+  <select id="tipo">
+    <option value="">Tipo</option>
+    <option value="celular">Celular</option>
+    <option value="accesorio">Accesorio</option>
+  </select>
+  <input id="subtipo" placeholder="Subtipo (iphone, funda, cargador...)">
+  <input id="imagenes" placeholder="Imagenes separadas por coma">
+  <button id="btn-agregar">Agregar</button>
+</div>
+
+<h2>Lista de Productos</h2>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Nombre</th>
+      <th>Precio</th>
+      <th>Stock</th>
+      <th>Tipo</th>
+      <th>Subtipo</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody id="productos-body"></tbody>
+</table>
+</div>
+
+<script>
+const API_URL = "http://localhost:3000/productos";
+const tbody = document.getElementById("productos-body");
+const btnAgregar = document.getElementById("btn-agregar");
+
+async function cargarProductos() {
+  const res = await fetch(API_URL);
+  const productos = await res.json();
+  tbody.innerHTML = "";
+  productos.forEach(p => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${p.id}</td>
+      <td>${p.nombre}</td>
+      <td>${p.precio}</td>
+      <td><input type="number" value="${p.stock}" data-id="${p.id}" class="stock-input"></td>
+      <td>${p.tipo}</td>
+      <td>${p.subtipo}</td>
+      <td>
+        <button class="btn-guardar" data-id="${p.id}">Guardar</button>
+        <button class="btn-borrar" data-id="${p.id}">Borrar</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.querySelectorAll(".btn-guardar").forEach(btn => {
+    btn.addEventListener("click", async e => {
+      const id = e.target.dataset.id;
+      const input = document.querySelector(`.stock-input[data-id="${id}"]`);
+      const stock = parseInt(input.value);
+      await fetch(`${API_URL}/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stock })
+      });
+      cargarProductos();
+    });
+  });
+
+  document.querySelectorAll(".btn-borrar").forEach(btn => {
+    btn.addEventListener("click", async e => {
+      const id = e.target.dataset.id;
+      await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+      cargarProductos();
+    });
+  });
+}
+
+btnAgregar.addEventListener("click", async () => {
+  const nombre = document.getElementById("nombre").value;
+  const precio = parseInt(document.getElementById("precio").value);
+  const stock = parseInt(document.getElementById("stock").value);
+  const tipo = document.getElementById("tipo").value;
+  const subtipo = document.getElementById("subtipo").value;
+  const imagenes = document.getElementById("imagenes").value.split(",").map(s=>s.trim()).filter(s=>s);
+
+  if (!nombre || isNaN(precio) || isNaN(stock) || !tipo || !subtipo || imagenes.length===0)
+    return alert("Completa todos los campos");
+
+  await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nombre, precio, stock, tipo, subtipo, imagenes })
+  });
+
+  document.getElementById("nombre").value = "";
+  document.getElementById("precio").value = "";
+  document.getElementById("stock").value = "";
+  document.getElementById("tipo").value = "";
+  document.getElementById("subtipo").value = "";
+  document.getElementById("imagenes").value = "";
+
+  cargarProductos();
+});
+
+cargarProductos();
+</script>
+</body>
+</html>
