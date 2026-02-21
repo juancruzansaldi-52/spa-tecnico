@@ -59,7 +59,11 @@ btnAgregar.onclick = async () => {
   const stock = parseInt(document.getElementById("stock").value);
   const tipo = document.getElementById("tipo").value;
   const subtipo = document.getElementById("subtipo").value;
-  const imagenes = document.getElementById("imagenes").value.split(",");
+  const imagenes = document
+  .getElementById("imagenes")
+  .value
+  .split(",")
+  .map(img => `/imagenes/${img.trim()}`);
 
   if(!nombre || isNaN(precio) || isNaN(stock)) return alert("Completa todos los campos");
 
