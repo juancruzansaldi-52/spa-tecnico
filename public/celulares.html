@@ -68,13 +68,19 @@ h1{text-align:center;margin-bottom:5px}
 
 <script>
 let carrito = JSON.parse(localStorage.getItem("carrito")) || [];
-let total = parseInt(localStorage.getItem("total")) || 0;
+let total = parseFloat(localStorage.getItem("total")) || 0;
 
 // Traer productos del backend
 async function obtenerProductos() {
-  const res = await fetch("http://localhost:3000/productos");
-  const data = await res.json();
-  return data.filter(p => p.tipo === "celular");
+  try {
+    const res = await fetch("http://localhost:3000/productos");
+    const data = await res.json();
+    // Asegurarse que sea un array y que tengan tipo "celular"
+    return Array.isArray(data)? data.filter(p=>p.tipo==='celular') : [];
+  } catch(err) {
+    console.error("Error cargando productos:", err);
+    return [];
+  }
 }
 
 function filtrar(tipo){
@@ -90,11 +96,12 @@ async function renderProductos(){
   productos.forEach(p=>{
     const card = document.createElement("div");
     card.className="card";
-    card.dataset.subtipo = p.subtipo;
+    card.dataset.subtipo = p.subtipo || 'otros';
+    const imgs = Array.isArray(p.imagenes) && p.imagenes.length>0 ? p.imagenes : ["https://via.placeholder.com/260x200?text=Sin+imagen"];
     card.innerHTML=`
       <span class="badge ${p.stock>0?"available":"sold"}">${p.stock>0?"Disponible":"Agotado"}</span>
       <div class="carousel">
-        ${p.imagenes.map((img,i)=>`<img src="${img}" class="${i===0?'active':''}">`).join("")}
+        ${imgs.map((img,i)=>`<img src="${img}" class="${i===0?'active':''}">`).join("")}
       </div>
       <div class="card-body">
         <h3>${p.nombre}</h3>
@@ -126,6 +133,7 @@ function actualizarContador(){ document.getElementById("count").innerText=carrit
 async function agregarAlCarrito(id){
   const productos = await obtenerProductos();
   const p = productos.find(x=>x.id===id);
+  if(!p) return alert("Producto no encontrado");
   if(p.stock<=0) return alert(`No hay más stock de ${p.nombre}`);
   const enCarrito = carrito.find(x=>x.id===id);
   const cantidadEnCarrito = enCarrito?enCarrito.cantidad:0;
@@ -184,4 +192,3 @@ renderCart();
 </script>
 </body>
 </html>
-
