@@ -70,13 +70,14 @@ h1{text-align:center;margin-bottom:5px}
 let carrito = JSON.parse(localStorage.getItem("carrito")) || [];
 let total = parseFloat(localStorage.getItem("total")) || 0;
 
-// Traer productos del backend
+// -------------------- PRODUCTOS --------------------
+const BACKEND_URL = "https://spa-tecnico.onrender.com/productos"; // URL de tu backend en Render
+
 async function obtenerProductos() {
   try {
-    const res = await fetch("http://localhost:3000/productos");
+    const res = await fetch(BACKEND_URL);
     const data = await res.json();
-    // Asegurarse que sea un array y que tengan tipo "celular"
-    return Array.isArray(data)? data.filter(p=>p.tipo==='celular') : [];
+    return Array.isArray(data) ? data.filter(p => p.tipo === "celular") : [];
   } catch(err) {
     console.error("Error cargando productos:", err);
     return [];
@@ -185,7 +186,7 @@ function enviarWhatsApp(){
   toggleCart();
 }
 
-// Inicializar
+// -------------------- INICIALIZAR --------------------
 renderProductos();
 actualizarContador();
 renderCart();
