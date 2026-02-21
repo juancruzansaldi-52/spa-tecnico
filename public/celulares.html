@@ -66,74 +66,6 @@ h1{text-align:center;margin-bottom:5px}
 <div class="checkout" onclick="enviarWhatsApp()">Enviar por WhatsApp</div>
 </div>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>spa.tecnico | Celulares</title>
-<style>
-:root {
-    --purple:#6C63FF; --green:#25D366; --black:#111; --white:#fff;
-    --bg:#F3F5F6; --muted:#6B6B6B; --radius:16px; --shadow:0 10px 25px rgba(0,0,0,.08);
-}
-*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial}
-body{margin:0;background:var(--bg);padding:25px 15px}
-.container{max-width:1200px;margin:auto}
-.top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:25px}
-.back{text-decoration:none;background:white;padding:10px 14px;border-radius:var(--radius);box-shadow:var(--shadow);font-weight:600;color:black}
-select{padding:10px;border-radius:var(--radius);border:none;box-shadow:var(--shadow);font-weight:600}
-h1{text-align:center;margin-bottom:5px}
-.subtitle{text-align:center;color:var(--muted);margin-bottom:25px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:25px}
-.card{background:white;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;position:relative;transition:.3s;}
-.card:hover{transform:translateY(-6px)}
-.badge{position:absolute;top:12px;left:12px;padding:6px 10px;border-radius:20px;font-size:12px;font-weight:700;color:white;}
-.available{background:#2ecc71}
-.sold{background:#e74c3c}
-.carousel{position:relative;height:200px;}
-.carousel img{width:100%;height:200px;object-fit:contain;display:none;}
-.carousel img.active{display:block}
-.carousel button{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);color:white;border:none;width:30px;height:30px;border-radius:50%;cursor:pointer;}
-.prev{left:8px}
-.next{right:8px}
-.card-body{padding:15px;text-align:center;}
-.price{font-weight:800;margin:10px 0;}
-.btn{background:var(--black);color:white;padding:10px 14px;border-radius:10px;font-weight:700;border:none;cursor:pointer;width:100%;}
-.btn:disabled{background:#aaa;cursor:not-allowed;}
-.cart{position:fixed;bottom:20px;right:20px;background:var(--purple);color:white;padding:15px;border-radius:20px;box-shadow:var(--shadow);font-weight:700;cursor:pointer;}
-.cart-box{position:fixed;bottom:90px;right:20px;background:white;padding:20px;border-radius:var(--radius);box-shadow:var(--shadow);width:300px;display:none;}
-.cart-box h3{margin-top:0}
-.cart-item{font-size:14px;margin-bottom:8px}
-.checkout{background:var(--green);color:white;padding:10px;border-radius:10px;text-align:center;font-weight:700;cursor:pointer;margin-top:10px;}
-</style>
-</head>
-<body>
-
-<div class="container">
-<div class="top">
-<a href="index.html" class="back">← Volver</a>
-<select onchange="filtrar(this.value)">
-<option value="all">Todos</option>
-<option value="iphone">iPhone</option>
-<option value="samsung">Samsung</option>
-</select>
-</div>
-
-<h1>📱 Celulares</h1>
-<p class="subtitle">Elegí tu equipo y enviá tu pedido por WhatsApp</p>
-
-<div class="grid" id="grid"></div>
-</div>
-
-<div class="cart" onclick="toggleCart()">🛒 Carrito (<span id="count">0</span>)</div>
-<div class="cart-box" id="cartBox">
-<h3>Tu pedido</h3>
-<div id="items"></div>
-<div id="total"></div>
-<div class="checkout" onclick="enviarWhatsApp()">Enviar por WhatsApp</div>
-</div>
-
 <script>
 let carrito = JSON.parse(localStorage.getItem("carrito")) || [];
 let total = parseInt(localStorage.getItem("total")) || 0;
@@ -252,3 +184,4 @@ renderCart();
 </script>
 </body>
 </html>
+
